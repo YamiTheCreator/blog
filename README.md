@@ -81,4 +81,59 @@ docker-compose up -d
 php artisan make:model Post -a
 ```
 
+Теперь нужно ввести обработку исключений. Будем использовать подход failfast - падать быстро и громко.
+Для этого в `./app` заведем новую папку `./Exceptions` и создадим набор базовых исключений -
+ - InvalidCredentialsException
+ - UserNotFoundException
+ - UserAlreadyExistsException
+
+Для этого используем команду
+```bash
+php artisan make:exception 'exception-name'
+```
+
+Теперь нужно ввести регистрацию исключений в `./bootstrap/app.php` в Exceptions middleware - 
+```php
+->withExceptions(function (Exceptions $exceptions) {
+
+        // HandleDomainException
+        $exceptions->report(function (DomainException $e) {
+            Log::warning("Business error: {$e->getErrorCode()} - {$e->getMessage()}", [
+                'exception' => $e,
+                'errorCode' => $e->getErrorCode()
+            ]);
+        })->stop(); // Предотвращает дублирование в основной лог
+
+        // HandleException
+        $exceptions->report(function (Throwable $e) {
+            Log::error("Unhandled server error: " . $e->getMessage(), [
+                'exception' => $e
+            ]);
+        });
+
+        // WriteProblemDetails
+        $exceptions->render(function (Throwable $e, Request $request) {
+            
+            // Если это доменное исключение
+            if ($e instanceof DomainException) {
+                return response()->json([
+                    'status' => $e->getCode(), // HTTP статус (400)
+                    'title'  => 'Business Error',
+                    'detail' => $e->getMessage(),
+                    'extensions' => [
+                        'StatusCode' => $e->getErrorCode() // ErrorCode
+                    ]
+                ], $e->getCode());
+            }
+
+            // Internal Server Error
+            return response()->json([
+                'status' => 500,
+                'title'  => 'Internal Server Error',
+                'detail' => config('app.debug') ? $e->getMessage() : 'An unexpected error occurred.'
+            ], 500);
+        });
+    })->create();
+```
+
 
