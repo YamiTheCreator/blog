@@ -136,4 +136,10 @@ php artisan make:exception 'exception-name'
     })->create();
 ```
 
+Теперь проработаем наши сущности-модели с помощью Eloquent ORM и настроим правильно миграции
+
+```bash
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+```
+
 
