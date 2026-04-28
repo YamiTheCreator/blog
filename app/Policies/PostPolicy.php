@@ -4,63 +4,56 @@ namespace App\Policies;
 
 use App\Models\Post;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class PostPolicy
 {
     /**
-     * Determine whether the user can view any models.
+     * Определить, может ли пользователь просматривать список постов
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->hasPermissionTo('view posts');
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Определить, может ли пользователь просматривать конкретный пост
      */
     public function view(User $user, Post $post): bool
     {
-        return false;
+        return $user->hasPermissionTo('view posts');
     }
 
     /**
-     * Determine whether the user can create models.
+     * Определить, может ли пользователь создавать посты
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->hasPermissionTo('create posts');
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Определить, может ли пользователь обновлять пост
      */
     public function update(User $user, Post $post): bool
     {
-        return false;
+        // Пользователь может редактировать свои посты или имеет право редактировать все посты (админ)
+        if ($user->id === $post->user_id && $user->hasPermissionTo('edit own posts')) {
+            return true;
+        }
+
+        return $user->hasPermissionTo('edit all posts');
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Определить, может ли пользователь удалять пост
      */
     public function delete(User $user, Post $post): bool
     {
-        return false;
-    }
+        // Пользователь может удалять свои посты или имеет право удалять все посты (админ)
+        if ($user->id === $post->user_id && $user->hasPermissionTo('delete own posts')) {
+            return true;
+        }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Post $post): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Post $post): bool
-    {
-        return false;
+        return $user->hasPermissionTo('delete all posts');
     }
 }
