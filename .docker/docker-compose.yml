@@ -3,7 +3,7 @@ name: 'blog'
 services:
     mysql:
         image: 'mysql:8.0'
-        container_name: blog_mysql
+        container_name: ${DB_DATABASE}
         env_file:
             - ../.env
         ports:
