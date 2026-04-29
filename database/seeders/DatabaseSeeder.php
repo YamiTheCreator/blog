@@ -10,9 +10,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Сначала создаем права доступа и роли
+        // Сначала создаем роли
         $this->call([
-            PermissionSeeder::class,
             RoleSeeder::class,
         ]);
 
@@ -24,7 +23,7 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('password'),
             ]
         );
-        $admin->assignRole('admin');
+        $admin->addRole(\Orchid\Platform\Models\Role::where('slug', 'admin')->first());
 
         // Создаем тестового пользователя если его еще нет
         $testUser = User::firstOrCreate(
@@ -34,7 +33,7 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('password'),
             ]
         );
-        $testUser->assignRole('user');
+        $testUser->addRole(\Orchid\Platform\Models\Role::where('slug', 'user')->first());
 
         // Создаем посты
         $this->call([
