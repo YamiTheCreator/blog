@@ -3,10 +3,9 @@
 namespace App\Services;
 
 use App\Contracts\UserRepositoryInterface;
-use App\Data\AuthResponseData;
-use App\Data\UserData;
 use App\Exceptions\InvalidCredentialsException;
 use App\Exceptions\UserAlreadyExistsException;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -21,7 +20,7 @@ class AuthService
      *
      * @throws UserAlreadyExistsException
      */
-    public function register(array $data): AuthResponseData
+    public function register(array $data): array
     {
         // Проверяем, существует ли пользователь с таким email
         if ($this->userRepository->findByEmail($data['email'])) {
@@ -30,17 +29,12 @@ class AuthService
 
         // Создаем пользователя
         $user = $this->userRepository->create($data);
-
         // Назначаем роль по умолчанию
         $this->userRepository->assignRole($user->id, 'user');
-
         // Создаем токен
         $token = $this->userRepository->createAccessToken($user);
 
-        return new AuthResponseData(
-            user: UserData::fromModel($user->fresh()),
-            access_token: $token,
-        );
+        return $this->serializeResponseToArray($user->fresh(), $token);
     }
 
     /**
@@ -48,10 +42,9 @@ class AuthService
      *
      * @throws InvalidCredentialsException
      */
-    public function login(array $credentials): AuthResponseData
+    public function login(array $credentials): array
     {
         $user = $this->userRepository->findByEmail($credentials['email']);
-
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             throw new InvalidCredentialsException("Неверный email или пароль!");
         }
@@ -59,10 +52,7 @@ class AuthService
         // Создаем токен
         $token = $this->userRepository->createAccessToken($user);
 
-        return new AuthResponseData(
-            user: UserData::fromModel($user),
-            access_token: $token,
-        );
+        return $this->serializeResponseToArray($user, $token);
     }
 
     /**
@@ -76,8 +66,25 @@ class AuthService
     /**
      * Получение текущего пользователя
      */
-    public function getCurrentUser(User $user): UserData
+    public function getCurrentUser(User $user): array
     {
-        return UserData::fromModel($user);
+        return $this->serializeResponseToArray($user);
+    }
+
+    /**
+     * Сериализация ответа в массив
+     */
+    private function serializeResponseToArray(User $user, ?string $token = null): array
+    {
+        $response = [
+            'user' => UserResource::make($user),
+        ];
+
+        if ($token) {
+            $response['access_token'] = $token;
+            $response['token_type'] = 'Bearer';
+        }
+
+        return $response;
     }
 }

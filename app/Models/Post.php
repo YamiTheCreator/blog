@@ -15,9 +15,6 @@ class Post extends Model
 {
     use HasFactory, HasUuids, Filterable, AsSource;
 
-    public $incrementing = false;
-    protected $keyType = 'string';
-
     protected $fillable = [
         'title',
         'text',

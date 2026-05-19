@@ -14,7 +14,8 @@ return new class extends Migration {
             $table->uuid('id')->primary();
             $table->string('title');
             $table->text('text');
-            $table->string('user_id')
+
+            $table->foreignUuid('user_id')
                 ->constrained('users')
                 ->cascadeOnDelete();
 

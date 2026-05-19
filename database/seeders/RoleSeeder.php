@@ -10,7 +10,7 @@ class RoleSeeder extends Seeder
     public function run(): void
     {
         // Создаем роль администратора
-        $admin = Role::firstOrCreate(
+        $admin = Role::query()->firstOrCreate(
             ['slug' => 'admin'],
             [
                 'name' => 'Administrator',
@@ -24,7 +24,7 @@ class RoleSeeder extends Seeder
         );
 
         // Создаем роль пользователя
-        $user = Role::firstOrCreate(
+        $user = Role::query()->firstOrCreate(
             ['slug' => 'user'],
             [
                 'name' => 'User',

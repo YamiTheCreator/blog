@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
+use Orchid\Platform\Models\Role;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -69,7 +70,12 @@ class UserRepository implements UserRepositoryInterface
             return false;
         }
 
-        $user->assignRole($roleName);
+        $role = Role::where('slug', $roleName)->first();
+        if (!$role) {
+            return false;
+        }
+
+        $user->addRole($role);
         return true;
     }
 
@@ -80,7 +86,8 @@ class UserRepository implements UserRepositoryInterface
             return false;
         }
 
-        $user->syncRoles($roleNames);
+        $roles = Role::wherein('slug', $roleNames)->get();
+        $user->replaceRoles($roles);
         return true;
     }
 }
